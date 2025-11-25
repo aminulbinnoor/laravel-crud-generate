@@ -296,7 +296,7 @@ class GenerateCrudCommand extends Command
     {
         // also add to api.php
         $apiRouteContent = "\n// {$this->modelName} CRUD API Routes\n";
-        $apiRouteContent .= "Route::apiResource('{$this->modelKebab}', \\App\\Http\\Controllers\\{$this->modelName}Controller::class);\n";
+        $apiRouteContent .= "Route::apiResource('{$this->modelKebab}', \\App\\Http\\Controllers\\API\\{$this->modelName}Controller::class);\n";
 
         $apiRoutesPath = config('crud-generator.paths.routes', 'routes/api.php');
 
