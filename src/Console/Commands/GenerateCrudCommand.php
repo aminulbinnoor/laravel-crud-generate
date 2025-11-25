@@ -48,7 +48,8 @@ class GenerateCrudCommand extends Command
         $this->generateRepository();
         $this->generateService();
         $this->generateController();
-        $this->generateRequests();
+        $this->generateStoreRequests();
+        $this->generateUpdateRequests();
         $this->generateViews();
         $this->addRoutes();
 
@@ -206,10 +207,10 @@ class GenerateCrudCommand extends Command
         $this->createFile($path, $stub, $replacements);
     }
 
-    protected function generateRequests()
+    protected function generateStoreRequests()
     {
         // Generate Store Request
-        $stub = $this->getStub('request');
+        $stub = $this->getStub('store-request');
         $replacements = [
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
@@ -220,6 +221,18 @@ class GenerateCrudCommand extends Command
 
         $storePath = app_path("{$requestPath}/Store{$this->modelName}Request.php");
         $this->createFile($storePath, $stub, $replacements);
+    }
+    protected function generateUpdateRequests()
+    {
+        // Generate Store Request
+        $stub = $this->getStub('update-request');
+        $replacements = [
+            '{{namespace}}' => config('crud-generator.namespace', 'App'),
+            '{{modelName}}' => $this->modelName,
+            '{{rules}}' => $this->generateValidationRules(),
+        ];
+
+        $requestPath = config('crud-generator.paths.requests', 'Http/Requests');
 
         $updatePath = app_path("{$requestPath}/Update{$this->modelName}Request.php");
         $this->createFile($updatePath, $stub, $replacements);
