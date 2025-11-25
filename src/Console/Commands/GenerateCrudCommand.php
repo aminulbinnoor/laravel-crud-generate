@@ -53,6 +53,7 @@ class GenerateCrudCommand extends Command
         $this->generateUpdateRequests();
         $this->generateViews();
         $this->addRoutes();
+        $this->addApiRoutes();
 
         $this->info("CRUD for {$this->modelName} generated successfully!");
         $this->info("Run: php artisan migrate");
@@ -289,16 +290,23 @@ class GenerateCrudCommand extends Command
         if ($this->files->exists($routesPath)) {
             $this->files->append($routesPath, $routeContent);
         }
+    }
 
+    protected function addApiRoutes()
+    {
         // also add to api.php
         $apiRouteContent = "\n// {$this->modelName} CRUD API Routes\n";
         $apiRouteContent .= "Route::apiResource('{$this->modelKebab}', \\App\\Http\\Controllers\\{$this->modelName}Controller::class);\n";
 
-        $apiRoutesPath = base_path('routes/api.php');
+        $apiRoutesPath = config('crud-generator.paths.routes', 'routes/api.php');
 
-        if ($this->files->exists($apiRoutesPath)) {
-            $this->files->append($apiRoutesPath, $apiRouteContent);
+        // if api.php exists, append the route or create it
+        if (!$this->files->exists($apiRoutesPath)) {
+            $this->files->put($apiRoutesPath, '');
         }
+
+        $this->files->append($apiRoutesPath, $apiRouteContent);
+
     }
 
     // Helper methods for generating stub content

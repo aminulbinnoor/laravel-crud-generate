@@ -27,6 +27,7 @@ return [
         'controllers' => 'Http/Controllers',
         'api-controllers' => 'Http/Controllers/API',
         'requests' => 'Http/Requests',
+        'routes' => 'routes/api.php',
     ],
 
     /*

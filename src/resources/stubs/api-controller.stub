@@ -2,6 +2,7 @@
 
 namespace {{namespace}}\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use {{namespace}}\Services\{{modelName}}Service;
