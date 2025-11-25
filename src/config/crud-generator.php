@@ -25,6 +25,7 @@ return [
         'interfaces' => 'Repositories/Contracts',
         'services' => 'Services',
         'controllers' => 'Http/Controllers',
+        'api-controllers' => 'Http/Controllers/API',
         'requests' => 'Http/Requests',
     ],
 

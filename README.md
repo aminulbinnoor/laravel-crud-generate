@@ -17,4 +17,8 @@ A powerful Laravel package that generates complete CRUD structure with repositor
 
 You can install the package via Composer:
 
-composer require aminul/crud-generate
+**composer require aminul/crud-generate**
+
+## Uses
+
+php artisan make:crud Product --fields="name:string,sku:string:unique,description:text,price:decimal,quantity:integer,weight:decimal,barcode:string,is_active:boolean"

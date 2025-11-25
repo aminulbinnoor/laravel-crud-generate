@@ -48,6 +48,7 @@ class GenerateCrudCommand extends Command
         $this->generateRepository();
         $this->generateService();
         $this->generateController();
+        $this->generateApiController();
         $this->generateStoreRequests();
         $this->generateUpdateRequests();
         $this->generateViews();
@@ -207,6 +208,24 @@ class GenerateCrudCommand extends Command
         $this->createFile($path, $stub, $replacements);
     }
 
+    //generate api controller
+    protected function generateApiController()
+    {
+        $stub = $this->getStub('api-controller');
+        $replacements = [
+            '{{namespace}}' => config('crud-generator.namespace', 'App'),
+            '{{modelName}}' => $this->modelName,
+            '{{modelPlural}}' => $this->modelPlural,
+            '{{modelVariable}}' => Str::camel($this->modelName),
+            '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
+            '{{viewPath}}' => $this->modelKebab,
+        ];
+
+        $controllerPath = config('crud-generator.paths.api-controllers', 'Http/Controllers/API');
+        $path = app_path("{$controllerPath}/{$this->modelName}Controller.php");
+        $this->createFile($path, $stub, $replacements);
+    }
+
     protected function generateStoreRequests()
     {
         // Generate Store Request
@@ -269,6 +288,16 @@ class GenerateCrudCommand extends Command
 
         if ($this->files->exists($routesPath)) {
             $this->files->append($routesPath, $routeContent);
+        }
+
+        // also add to api.php
+        $apiRouteContent = "\n// {$this->modelName} CRUD API Routes\n";
+        $apiRouteContent .= "Route::apiResource('{$this->modelKebab}', \\App\\Http\\Controllers\\{$this->modelName}Controller::class);\n";
+
+        $apiRoutesPath = base_path('routes/api.php');
+
+        if ($this->files->exists($apiRoutesPath)) {
+            $this->files->append($apiRoutesPath, $apiRouteContent);
         }
     }
 

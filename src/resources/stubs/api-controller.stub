@@ -1,0 +1,145 @@
+<?php
+
+namespace {{namespace}}\Http\Controllers\API;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use {{namespace}}\Services\{{modelName}}Service;
+use {{namespace}}\Http\Requests\Store{{modelName}}Request;
+use {{namespace}}\Http\Requests\Update{{modelName}}Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
+class {{modelName}}Controller extends Controller
+{
+    protected $service;
+
+    public function __construct({{modelName}}Service $service)
+    {
+        $this->service = $service;
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        try {
+            $perPage = $request->get('per_page', 15);
+            ${{modelPluralVariable}} = $this->service->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => ${{modelPluralVariable}},
+                'message' => '{{modelPlural}} retrieved successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve {{modelPlural}}.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Store{{modelName}}Request $request): JsonResponse
+    {
+        try {
+            ${{modelVariable}} = $this->service->create($request->validated());
+
+            return response()->json([
+                'success' => true,
+                'data' => ${{modelVariable}},
+                'message' => '{{modelName}} created successfully.'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create {{modelName}}.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id): JsonResponse
+    {
+        try {
+            ${{modelVariable}} = $this->service->getById($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => ${{modelVariable}},
+                'message' => '{{modelName}} retrieved successfully.'
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '{{modelName}} not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve {{modelName}}.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Update{{modelName}}Request $request, $id): JsonResponse
+    {
+        try {
+            ${{modelVariable}} = $this->service->update($id, $request->validated());
+
+            return response()->json([
+                'success' => true,
+                'data' => ${{modelVariable}},
+                'message' => '{{modelName}} updated successfully.'
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '{{modelName}} not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update {{modelName}}.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id): JsonResponse
+    {
+        try {
+            $this->service->delete($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => '{{modelName}} deleted successfully.'
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '{{modelName}} not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete {{modelName}}.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+}
