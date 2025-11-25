@@ -1,6 +1,6 @@
 <?php
 
-namespace Aminul\CrudGenerator\Console\Commands;
+namespace Aminul\CrudGenerate\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;

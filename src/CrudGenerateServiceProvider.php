@@ -1,15 +1,14 @@
 <?php
 
-namespace Aminul\CrudGenerator;
+namespace Aminul\CrudGenerate;
 
 use Illuminate\Support\ServiceProvider;
-use Aminul\CrudGenerator\Console\Commands\GenerateCrudCommand;
+use Aminul\CrudGenerate\Console\Commands\GenerateCrudCommand;
 
-class CrudGeneratorServiceProvider extends ServiceProvider
+class CrudGenerateServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        // Register commands
         $this->commands([
             GenerateCrudCommand::class,
         ]);
