@@ -1,0 +1,30 @@
+{
+    "name": "aminul/crud-generate",
+    "description": "A Laravel package to generate complete CRUD structure with repository pattern",
+    "type": "library",
+    "license": "Mit",
+    "autoload": {
+        "psr-4": {
+            "Aminul\\CrudGenerate\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Aminul Islam",
+            "email": "cselab7777@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Aminul\\CrudGenerate\\CrudGenerateServiceProvider"
+            ],
+            "aliases": {
+                "CrudGenerate": "Aminul\\CrudGenerate\\Facades\\CrudGenerate"
+            }
+        }
+    },
+    "require": {
+        
+    }
+}

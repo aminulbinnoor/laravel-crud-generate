@@ -1,0 +1,59 @@
+<?php
+
+namespace {{namespace}}\Http\Controllers;
+
+use Illuminate\Http\Request;
+use {{namespace}}\Services\{{modelName}}Service;
+use {{namespace}}\Http\Requests\Store{{modelName}}Request;
+use {{namespace}}\Http\Requests\Update{{modelName}}Request;
+
+class {{modelName}}Controller extends Controller
+{
+    protected $service;
+
+    public function __construct({{modelName}}Service $service)
+    {
+        $this->service = $service;
+    }
+
+    public function index()
+    {
+        ${{modelPluralVariable}} = $this->service->paginate();
+        return view('{{viewPath}}.index', compact('{{modelPluralVariable}}'));
+    }
+
+    public function create()
+    {
+        return view('{{viewPath}}.create');
+    }
+
+    public function store(Store{{modelName}}Request $request)
+    {
+        $this->service->create($request->validated());
+        return redirect()->route('{{viewPath}}.index')->with('success', '{{modelName}} created successfully.');
+    }
+
+    public function show($id)
+    {
+        ${{modelVariable}} = $this->service->getById($id);
+        return view('{{viewPath}}.show', compact('{{modelVariable}}'));
+    }
+
+    public function edit($id)
+    {
+        ${{modelVariable}} = $this->service->getById($id);
+        return view('{{viewPath}}.edit', compact('{{modelVariable}}'));
+    }
+
+    public function update(Update{{modelName}}Request $request, $id)
+    {
+        $this->service->update($id, $request->validated());
+        return redirect()->route('{{viewPath}}.index')->with('success', '{{modelName}} updated successfully.');
+    }
+
+    public function destroy($id)
+    {
+        $this->service->delete($id);
+        return redirect()->route('{{viewPath}}.index')->with('success', '{{modelName}} deleted successfully.');
+    }
+}
