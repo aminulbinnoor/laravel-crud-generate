@@ -1,0 +1,136 @@
+<?php
+
+namespace {{namespace}}\Models;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class BaseModel extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'deleted_at',
+    ];
+
+    /**
+     * Boot function for using with User Events
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Set created_by and updated_by when creating
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $model->created_by = auth()->id();
+                $model->updated_by = auth()->id();
+            }
+        });
+
+        // Set updated_by when updating
+        static::updating(function ($model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
+        });
+
+        // Set deleted_by when soft deleting
+        static::deleting(function ($model) {
+            if (auth()->check()) {
+                $model->deleted_by = auth()->id();
+                $model->save();
+            }
+        });
+
+        // Restore deleted_by when restoring
+        static::restoring(function ($model) {
+            $model->deleted_by = null;
+        });
+    }
+
+    /**
+     * Get the user who created the record.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who last updated the record.
+     */
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the user who deleted the record.
+     */
+    public function deleter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    /**
+     * Scope a query to only include records created by a specific user.
+     */
+    public function scopeCreatedBy($query, $userId)
+    {
+        return $query->where('created_by', $userId);
+    }
+
+    /**
+     * Scope a query to only include records updated by a specific user.
+     */
+    public function scopeUpdatedBy($query, $userId)
+    {
+        return $query->where('updated_by', $userId);
+    }
+
+    /**
+     * Get the name of the "created by" column.
+     */
+    public function getCreatedByColumn()
+    {
+        return 'created_by';
+    }
+
+    /**
+     * Get the name of the "updated by" column.
+     */
+    public function getUpdatedByColumn()
+    {
+        return 'updated_by';
+    }
+
+    /**
+     * Get the name of the "deleted by" column.
+     */
+    public function getDeletedByColumn()
+    {
+        return 'deleted_by';
+    }
+}

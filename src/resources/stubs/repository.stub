@@ -26,12 +26,24 @@ class {{modelName}}Repository implements {{modelName}}RepositoryInterface
 
     public function create(array $data)
     {
+        // Add audit fields
+        if (auth()->check()) {
+            $data['created_by'] = auth()->id();
+            $data['updated_by'] = auth()->id();
+        }
+
         return $this->model->create($data);
     }
 
     public function update($id, array $data)
     {
         $record = $this->find($id);
+
+        // Add audit field
+        if (auth()->check()) {
+            $data['updated_by'] = auth()->id();
+        }
+
         $record->update($data);
         return $record;
     }
@@ -39,6 +51,13 @@ class {{modelName}}Repository implements {{modelName}}RepositoryInterface
     public function delete($id)
     {
         $record = $this->find($id);
+
+        // Set deleted_by before soft deleting
+        if (auth()->check()) {
+            $record->deleted_by = auth()->id();
+            $record->save();
+        }
+
         return $record->delete();
     }
 

@@ -34,10 +34,14 @@ class GenerateCrudCommand extends Command
         $this->modelPlural = Str::plural($this->modelName);
         $this->modelSnake = Str::snake($this->modelName);
         $this->modelKebab = Str::kebab($this->modelName);
-        $this->modelVariable = Str::camel($this->modelName); // Add this line
+        $this->modelVariable = Str::camel($this->modelName);
 
         $this->parseFields();
 
+        // Generate BaseModel first
+        $this->generateBaseModel();
+
+        // Then generate other files
         $this->generateModel();
         $this->generateMigration();
         $this->generateRepositoryInterface();
@@ -50,6 +54,7 @@ class GenerateCrudCommand extends Command
 
         $this->info("CRUD for {$this->modelName} generated successfully!");
         $this->info("Run: php artisan migrate");
+        $this->info("Make sure you have a User model with id field for the audit relations.");
     }
 
     protected function parseFields()
@@ -78,17 +83,97 @@ class GenerateCrudCommand extends Command
         $this->createFile($path, $stub, $replacements);
     }
 
+    protected function generateBaseModel()
+    {
+        $stub = $this->getStub('base-model');
+        $replacements = [
+            '{{namespace}}' => config('crud-generator.namespace', 'App'),
+        ];
+
+        $path = app_path('Models/BaseModel.php');
+
+        // Only create BaseModel if it doesn't exist
+        if (!$this->files->exists($path)) {
+            $this->createFile($path, $stub, $replacements);
+            $this->info("Created: BaseModel.php");
+        } else {
+            $this->info("BaseModel already exists, skipping...");
+        }
+    }
+
     protected function generateMigration()
     {
         $tableName = Str::plural(Str::snake($this->modelName));
         $migrationName = 'create_' . $tableName . '_table';
 
-        $this->call('make:migration', [
-            'name' => $migrationName,
-        ]);
+        // Use custom migration stub
+        $stub = $this->getStub('migration');
+        $replacements = [
+            '{{tableName}}' => $tableName,
+            '{{migrationFields}}' => $this->generateMigrationFields(),
+        ];
 
-        // We would need to modify the migration file, but for simplicity,
-        // we'll just create a basic one
+        $timestamp = date('Y_m_d_His');
+        $path = database_path("migrations/{$timestamp}_{$migrationName}.php");
+
+        $this->createFile($path, $stub, $replacements);
+        $this->info("Created: {$timestamp}_{$migrationName}.php");
+    }
+
+    protected function generateMigrationFields()
+    {
+        $fields = '';
+        foreach ($this->fields as $field => $type) {
+            $fieldDefinition = $this->getFieldDefinition($field, $type);
+            $fields .= "            \$table->{$fieldDefinition};\n";
+        }
+        return $fields;
+    }
+
+    protected function getFieldDefinition($field, $type)
+    {
+        $definitions = [
+            'string' => "string('{$field}')",
+            'text' => "text('{$field}')",
+            'integer' => "integer('{$field}')",
+            'decimal' => "decimal('{$field}', 8, 2)",
+            'boolean' => "boolean('{$field}')",
+            'date' => "date('{$field}')",
+            'datetime' => "datetime('{$field}')",
+            'timestamp' => "timestamp('{$field}')",
+            'json' => "json('{$field}')",
+            'email' => "string('{$field}')",
+        ];
+
+        return $definitions[$type] ?? "string('{$field}')";
+    }
+
+    protected function generateFillableFields()
+    {
+        $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
+        return "[\n            '" . implode("',\n            '", $fillable) . "'\n        ]";
+    }
+
+    protected function generateCastFields()
+    {
+        $casts = [];
+        foreach ($this->fields as $field => $type) {
+            if (in_array($type, ['json', 'array', 'boolean', 'date', 'datetime', 'decimal'])) {
+                $castType = $type === 'decimal' ? 'decimal:2' : $type;
+                $casts[] = "'{$field}' => '{$castType}'";
+            }
+        }
+
+        // Add default casts
+        $defaultCasts = [
+            "'created_at' => 'datetime'",
+            "'updated_at' => 'datetime'",
+            "'deleted_at' => 'datetime'",
+        ];
+
+        $allCasts = array_merge($casts, $defaultCasts);
+
+        return $allCasts ? "[\n            " . implode(",\n            ", $allCasts) . "\n        ]" : '[]';
     }
 
     protected function generateRepositoryInterface()
@@ -228,20 +313,12 @@ class GenerateCrudCommand extends Command
 
     protected function generateFillable()
     {
-        $fillable = array_keys($this->fields);
-        return "['" . implode("', '", $fillable) . "']";
+        return $this->generateFillableFields();
     }
 
     protected function generateCasts()
     {
-        $casts = [];
-        foreach ($this->fields as $field => $type) {
-            if (in_array($type, ['json', 'array', 'boolean', 'date', 'datetime'])) {
-                $casts[] = "'{$field}' => '{$type}'";
-            }
-        }
-
-        return $casts ? "[\n            " . implode(",\n            ", $casts) . "\n        ]" : '[]';
+        return $this->generateCastFields();
     }
 
     protected function generateValidationRules()

@@ -3,13 +3,41 @@
 namespace {{namespace}}\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class {{modelName}} extends Model
+class {{modelName}} extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = {{fillable}};
 
     protected $casts = {{casts}};
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        {{fillableFields}}
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        {{castFields}}
+    ];
+
+    /**
+     * Relationships that should be loaded by default.
+     *
+     * @var array
+     */
+    protected $with = [
+        'creator',
+        'updater',
+    ];
 }
