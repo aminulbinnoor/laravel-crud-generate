@@ -295,19 +295,14 @@ class GenerateCrudCommand extends Command
     protected function addApiRoutes()
     {
         // also add to api.php
-
-        $apiRouteContent = "<?php \n";
         $apiRouteContent = "\n// {$this->modelName} CRUD API Routes\n";
         $apiRouteContent .= "Route::apiResource('{$this->modelKebab}', \\App\\Http\\Controllers\\{$this->modelName}Controller::class);\n";
 
         $apiRoutesPath = config('crud-generator.paths.routes', 'routes/api.php');
 
-        // if api.php exists, append the route or create it
-        if (!$this->files->exists($apiRoutesPath)) {
-            $this->files->put($apiRoutesPath, $apiRouteContent);
+        if ($this->files->exists($apiRoutesPath)) {
+            $this->files->append($apiRoutesPath, $apiRouteContent);
         }
-
-        $this->files->append($apiRoutesPath, $apiRouteContent);
 
     }
 
