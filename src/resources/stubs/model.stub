@@ -9,27 +9,19 @@ class {{modelName}} extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = {{fillable}};
-
-    protected $casts = {{casts}};
-
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        {{fillableFields}}
-    ];
+    protected $fillable = {{fillable}};
 
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
-    protected $casts = [
-        {{castFields}}
-    ];
+    protected $casts = {{casts}};
 
     /**
      * Relationships that should be loaded by default.

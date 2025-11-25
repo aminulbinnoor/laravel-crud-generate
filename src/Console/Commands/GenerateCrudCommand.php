@@ -148,34 +148,6 @@ class GenerateCrudCommand extends Command
         return $definitions[$type] ?? "string('{$field}')";
     }
 
-    protected function generateFillableFields()
-    {
-        $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
-        return "[\n            '" . implode("',\n            '", $fillable) . "'\n        ]";
-    }
-
-    protected function generateCastFields()
-    {
-        $casts = [];
-        foreach ($this->fields as $field => $type) {
-            if (in_array($type, ['json', 'array', 'boolean', 'date', 'datetime', 'decimal'])) {
-                $castType = $type === 'decimal' ? 'decimal:2' : $type;
-                $casts[] = "'{$field}' => '{$castType}'";
-            }
-        }
-
-        // Add default casts
-        $defaultCasts = [
-            "'created_at' => 'datetime'",
-            "'updated_at' => 'datetime'",
-            "'deleted_at' => 'datetime'",
-        ];
-
-        $allCasts = array_merge($casts, $defaultCasts);
-
-        return $allCasts ? "[\n            " . implode(",\n            ", $allCasts) . "\n        ]" : '[]';
-    }
-
     protected function generateRepositoryInterface()
     {
         $stub = $this->getStub('repository-interface');
@@ -313,12 +285,30 @@ class GenerateCrudCommand extends Command
 
     protected function generateFillable()
     {
-        return $this->generateFillableFields();
+        $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
+        return "[\n            '" . implode("',\n            '", $fillable) . "'\n        ]";
     }
 
     protected function generateCasts()
     {
-        return $this->generateCastFields();
+        $casts = [];
+        foreach ($this->fields as $field => $type) {
+            if (in_array($type, ['json', 'array', 'boolean', 'date', 'datetime', 'decimal'])) {
+                $castType = $type === 'decimal' ? 'decimal:2' : $type;
+                $casts[] = "'{$field}' => '{$castType}'";
+            }
+        }
+
+        // Add default casts
+        $defaultCasts = [
+            "'created_at' => 'datetime'",
+            "'updated_at' => 'datetime'",
+            "'deleted_at' => 'datetime'",
+        ];
+
+        $allCasts = array_merge($casts, $defaultCasts);
+
+        return $allCasts ? "[\n            " . implode(",\n            ", $allCasts) . "\n        ]" : '[]';
     }
 
     protected function generateValidationRules()
