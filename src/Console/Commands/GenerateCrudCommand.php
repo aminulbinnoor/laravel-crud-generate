@@ -295,6 +295,8 @@ class GenerateCrudCommand extends Command
     protected function addApiRoutes()
     {
         // also add to api.php
+
+        $apiRouteContent = "<?php \n";
         $apiRouteContent = "\n// {$this->modelName} CRUD API Routes\n";
         $apiRouteContent .= "Route::apiResource('{$this->modelKebab}', \\App\\Http\\Controllers\\{$this->modelName}Controller::class);\n";
 
