@@ -9,6 +9,7 @@ class CrudGenerateServiceProvider extends ServiceProvider
 {
     public function register()
     {
+        $this->loadViewsFrom(__DIR__.'/resources/stubs', 'CrudGenerate');
         $this->commands([
             GenerateCrudCommand::class,
         ]);
@@ -23,7 +24,7 @@ class CrudGenerateServiceProvider extends ServiceProvider
 
         // Publish stubs
         $this->publishes([
-            __DIR__ . '/../stubs/' => base_path('stubs/crud-generator/'),
-        ], 'crud-generator-stubs');
+            __DIR__.'/resources/stubs' => resource_path('vendor/aminul/stubs'),
+        ]);
     }
 }
