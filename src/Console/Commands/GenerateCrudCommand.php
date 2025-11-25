@@ -205,7 +205,22 @@ class GenerateCrudCommand extends Command
     // Helper methods for generating stub content
     protected function getStub($type)
     {
-        return file_get_contents(resource_path("vendor/aminul/stubs/$type.stub"));
+        // In a real implementation, you would load stub files from disk.
+        // For simplicity, we'll return hardcoded stubs here.
+        $stubs = [
+            'model' => file_get_contents(__DIR__ . '/stubs/model.stub'),
+            'repository-interface' => file_get_contents(__DIR__ . '/stubs/repository-interface.stub'),
+            'repository' => file_get_contents(__DIR__ . '/stubs/repository.stub'),
+            'service' => file_get_contents(__DIR__ . '/stubs/service.stub'),
+            'controller' => file_get_contents(__DIR__ . '/stubs/controller.stub'),
+            'request' => file_get_contents(__DIR__ . '/stubs/request.stub'),
+            'views/index' => file_get_contents(__DIR__ . '/stubs/views/index.stub'),
+            'views/create' => file_get_contents(__DIR__ . '/stubs/views/create.stub'),
+            'views/edit' => file_get_contents(__DIR__ . '/stubs/views/edit.stub'),
+            'views/show' => file_get_contents(__DIR__ . '/stubs/views/show.stub'),
+        ];
+
+        return $stubs[$type];
     }
 
     protected function createFile($path, $stub, $replacements)
