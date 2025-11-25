@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 class GenerateCrudCommand extends Command
 {
+    protected $modelVariable;
     protected $signature = 'make:crud {name : The name of the model}
                                       {--fields= : Fields for the model (e.g., "name:string,email:string")}
                                       {--sample : Generate with sample data}';
@@ -33,6 +34,7 @@ class GenerateCrudCommand extends Command
         $this->modelPlural = Str::plural($this->modelName);
         $this->modelSnake = Str::snake($this->modelName);
         $this->modelKebab = Str::kebab($this->modelName);
+        $this->modelVariable = Str::camel($this->modelName); // Add this line
 
         $this->parseFields();
 
@@ -203,7 +205,20 @@ class GenerateCrudCommand extends Command
     // Helper methods for generating stub content
     protected function getStub($type)
     {
-        return $this->files->get(__DIR__ . "/../../../stubs/{$type}.stub");
+        // Get the package root directory
+        $packageRoot = dirname(__DIR__, 3);
+        $stubPath = $packageRoot . "/stubs/{$type}.stub";
+
+        if (!file_exists($stubPath)) {
+            // Alternative path for development
+            $stubPath = __DIR__ . "/../../../stubs/{$type}.stub";
+        }
+
+        if (!file_exists($stubPath)) {
+            throw new \Exception("Stub file not found: {$type}.stub");
+        }
+
+        return file_get_contents($stubPath);
     }
 
     protected function createFile($path, $stub, $replacements)
@@ -296,5 +311,16 @@ class GenerateCrudCommand extends Command
             $rows .= "<td>{{ \${$this->modelVariable}->{$field} }}</td>\n                            ";
         }
         return $rows;
+    }
+
+    protected function generateShowFields()
+    {
+        $fields = '';
+        foreach ($this->fields as $field => $type) {
+            $label = Str::title(str_replace('_', ' ', $field));
+            $fields .= "
+                                <p><strong>{$label}:</strong> {{ \${$this->modelVariable}->{$field} }}</p>";
+        }
+        return $fields;
     }
 }
