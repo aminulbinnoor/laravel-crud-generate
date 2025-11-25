@@ -304,7 +304,7 @@ class GenerateCrudCommand extends Command
 
         // if api.php exists, append the route or create it
         if (!$this->files->exists($apiRoutesPath)) {
-            $this->files->put($apiRoutesPath, '');
+            $this->files->put($apiRoutesPath, $apiRouteContent);
         }
 
         $this->files->append($apiRoutesPath, $apiRouteContent);
