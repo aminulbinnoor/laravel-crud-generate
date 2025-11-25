@@ -1,6 +1,6 @@
 {
     "name": "aminul/crud-generate",
-    "description": "A Laravel package to generate complete CRUD structure with repository pattern",
+    "description": "Laravel package to generate complete CRUD structure with repository pattern, service classes, and beautiful views. Follows Laravel best pattern",
     "type": "library",
     "license": "Mit",
     "autoload": {
@@ -25,6 +25,6 @@
         }
     },
     "require": {
-        
+
     }
 }
