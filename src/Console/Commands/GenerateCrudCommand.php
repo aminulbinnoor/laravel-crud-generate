@@ -205,20 +205,7 @@ class GenerateCrudCommand extends Command
     // Helper methods for generating stub content
     protected function getStub($type)
     {
-        // Get the package root directory
-        $packageRoot = dirname(__DIR__, 3);
-        $stubPath = $packageRoot . "/stubs/{$type}.stub";
-
-        if (!file_exists($stubPath)) {
-            // Alternative path for development
-            $stubPath = __DIR__ . "/../../../stubs/{$type}.stub";
-        }
-
-        if (!file_exists($stubPath)) {
-            throw new \Exception("Stub file not found: {$type}.stub");
-        }
-
-        return file_get_contents($stubPath);
+        return file_get_contents(resource_path("vendor/aminul/stubs/$type.stub"));
     }
 
     protected function createFile($path, $stub, $replacements)
