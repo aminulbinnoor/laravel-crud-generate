@@ -126,7 +126,7 @@ class GenerateCrudCommand extends Command
         $fields = '';
         foreach ($this->fields as $field => $type) {
             $fieldDefinition = $this->getFieldDefinition($field, $type);
-            $fields .= "            \$table->{$fieldDefinition};\n";
+            $fields .= "\$table->{$fieldDefinition};\n";
         }
         return $fields;
     }
@@ -134,13 +134,13 @@ class GenerateCrudCommand extends Command
     protected function getFieldDefinition($field, $type)
     {
         $definitions = [
-            'string' => "string('{$field}')",
-            'text' => "text('{$field}')",
-            'integer' => "integer('{$field}')",
-            'decimal' => "decimal('{$field}', 8, 2)",
-            'boolean' => "boolean('{$field}')",
-            'date' => "date('{$field}')",
-            'datetime' => "datetime('{$field}')",
+            'string'    => "string('{$field}')",
+            'text'      => "text('{$field}')",
+            'integer'   => "integer('{$field}')",
+            'decimal'   => "decimal('{$field}', 8, 2)",
+            'boolean'   => "boolean('{$field}')",
+            'date'      => "date('{$field}')",
+            'datetime'  => "datetime('{$field}')",
             'timestamp' => "timestamp('{$field}')",
             'json' => "json('{$field}')",
             'email' => "string('{$field}')",
