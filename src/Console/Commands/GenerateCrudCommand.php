@@ -54,6 +54,7 @@ class GenerateCrudCommand extends Command
         // Generate layouts if not exists
         $this->generateLayouts();
         $this->generateViews();
+        $this->generateShowFields();
         $this->addRoutes();
         $this->addApiRoutes();
 
