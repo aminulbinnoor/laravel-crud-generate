@@ -54,6 +54,7 @@ class GenerateCrudCommand extends Command
         // Generate layouts if not exists
         $this->generateLayouts();
         $this->generateViews();
+        $this->generateFieldDetails();
         $this->addRoutes();
         $this->addApiRoutes();
 
@@ -130,7 +131,7 @@ class GenerateCrudCommand extends Command
         $fields = '';
         foreach ($this->fields as $field => $type) {
             $fieldDefinition = $this->getFieldDefinition($field, $type);
-            $fields .= "\$table->{$fieldDefinition};\n";
+            $fields .= "            \$table->{$fieldDefinition};\n";
         }
         return $fields;
     }
@@ -260,28 +261,6 @@ class GenerateCrudCommand extends Command
         $this->createFile($updatePath, $stub, $replacements);
     }
 
-    protected function generateViews()
-    {
-        $views = ['index', 'create', 'edit', 'show'];
-
-        foreach ($views as $view) {
-            $stub = $this->getStub("views/{$view}");
-            $replacements = [
-                '{{modelName}}' => $this->modelName,
-                '{{modelPlural}}' => $this->modelPlural,
-                '{{modelVariable}}' => Str::camel($this->modelName),
-                '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
-                '{{viewPath}}' => $this->modelKebab,
-                '{{fields}}' => $this->generateViewFields(),
-                '{{tableHeaders}}' => $this->generateTableHeaders(),
-                '{{tableRows}}' => $this->generateTableRows(),
-            ];
-
-            $path = resource_path("views/{$this->modelKebab}/{$view}.blade.php");
-            $this->createFile($path, $stub, $replacements);
-        }
-    }
-
     protected function generateLayouts()
     {
         // Only create layout if it doesn't exist
@@ -301,6 +280,38 @@ class GenerateCrudCommand extends Command
             $this->info("Created: layouts/app.blade.php");
         } else {
             $this->info("Layout already exists, skipping...");
+        }
+    }
+
+    protected function generateFieldDetails()
+    {
+        $fields = '';
+        foreach ($this->fields as $field => $type) {
+            $label = Str::title(str_replace('_', ' ', $field));
+            $fields .= "                            <p><strong>{$label}:</strong> {{ \${$this->modelVariable}->{$field} }}</p>\n";
+        }
+        return trim($fields);
+    }
+
+    protected function generateViews()
+    {
+        $views = ['index', 'create', 'edit', 'show'];
+
+        foreach ($views as $view) {
+            $stub = $this->getStub("views/{$view}");
+            $replacements = [
+                '{{modelName}}' => $this->modelName,
+                '{{modelPlural}}' => $this->modelPlural,
+                '{{modelVariable}}' => Str::camel($this->modelName),
+                '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
+                '{{viewPath}}' => $this->modelKebab,
+                '{{fields}}' => $this->generateViewFields(),
+                '{{tableHeaders}}' => $this->generateTableHeaders(),
+                '{{tableRows}}' => $this->generateTableRows(),
+            ];
+
+            $path = resource_path("views/{$this->modelKebab}/{$view}.blade.php");
+            $this->createFile($path, $stub, $replacements);
         }
     }
 
