@@ -28,7 +28,7 @@
                         <th width="30%">ID</th>
                         <td>#{{ ${{modelVariable}}->id }}</td>
                     </tr>
-                    {{fieldDetails}}
+                    {{showFields}}
                 </table>
             </div>
         </div>
