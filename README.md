@@ -22,6 +22,8 @@ You can install the package via Composer:
 
 ## Uses
 
+In your Laravel application just run this command.
+
 **php artisan make:crud Product --fields="name:string,sku:string:unique,description:text,price:decimal,quantity:integer,is_active:boolean"**
 
 *php artisan make:crud Product --sample*
