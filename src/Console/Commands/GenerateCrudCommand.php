@@ -298,6 +298,7 @@ class GenerateCrudCommand extends Command
                 '{{fields}}' => $this->generateViewFields(),
                 '{{tableHeaders}}' => $this->generateTableHeaders(),
                 '{{tableRows}}' => $this->generateTableRows(),
+                '{{showFields}}' => $this->generateShowFields(),
             ];
 
             $path = resource_path("views/{$this->modelKebab}/{$view}.blade.php");
