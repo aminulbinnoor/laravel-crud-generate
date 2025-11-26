@@ -23,3 +23,5 @@ You can install the package via Composer:
 ## Uses
 
 php artisan make:crud Product --fields="name:string,sku:string:unique,description:text,price:decimal,quantity:integer,weight:decimal,barcode:string,is_active:boolean"
+
+php artisan make:crud Product --sample
