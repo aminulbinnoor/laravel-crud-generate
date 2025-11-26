@@ -51,6 +51,8 @@ class GenerateCrudCommand extends Command
         $this->generateApiController();
         $this->generateStoreRequests();
         $this->generateUpdateRequests();
+        // Generate layouts if not exists
+        $this->generateLayouts();
         $this->generateViews();
         $this->addRoutes();
         $this->addApiRoutes();
@@ -277,6 +279,28 @@ class GenerateCrudCommand extends Command
 
             $path = resource_path("views/{$this->modelKebab}/{$view}.blade.php");
             $this->createFile($path, $stub, $replacements);
+        }
+    }
+
+    protected function generateLayouts()
+    {
+        // Only create layout if it doesn't exist
+        $layoutPath = resource_path("views/layouts/app.blade.php");
+
+        if (!$this->files->exists($layoutPath)) {
+            $stub = $this->getStub('layouts/app');
+            $replacements = [
+                '{{modelName}}' => $this->modelName,
+                '{{modelPlural}}' => $this->modelPlural,
+                '{{modelVariable}}' => $this->modelVariable,
+                '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
+                '{{viewPath}}' => $this->modelKebab,
+            ];
+
+            $this->createFile($layoutPath, $stub, $replacements);
+            $this->info("Created: layouts/app.blade.php");
+        } else {
+            $this->info("Layout already exists, skipping...");
         }
     }
 
