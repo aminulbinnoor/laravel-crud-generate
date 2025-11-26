@@ -1,4 +1,3 @@
-
 # Laravel CRUD Generator
 
 A powerful Laravel package that automatically generates complete CRUD (Create, Read, Update, Delete) structure with repository pattern, service classes, and professional Bootstrap views. Save hours of development time with a single command!
@@ -196,6 +195,8 @@ RESTful API controllers are generated with proper JSON responses and error handl
 - **MVP Development** - Get to market faster
 - **Learning** - Study Laravel best practices
 - **Team Projects** - Consistent code structure
+
+[![1764154925293](image/README/1764154925293.png)]()
 
 ## 🔄 Architecture
 
