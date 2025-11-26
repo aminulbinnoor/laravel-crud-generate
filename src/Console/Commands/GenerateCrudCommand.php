@@ -54,7 +54,6 @@ class GenerateCrudCommand extends Command
         // Generate layouts if not exists
         $this->generateLayouts();
         $this->generateViews();
-        $this->generateFieldDetails();
         $this->addRoutes();
         $this->addApiRoutes();
 
@@ -281,16 +280,6 @@ class GenerateCrudCommand extends Command
         } else {
             $this->info("Layout already exists, skipping...");
         }
-    }
-
-    protected function generateFieldDetails()
-    {
-        $fields = '';
-        foreach ($this->fields as $field => $type) {
-            $label = Str::title(str_replace('_', ' ', $field));
-            $fields .= "                            <p><strong>{$label}:</strong> {{ \${$this->modelVariable}->{$field} }}</p>\n";
-        }
-        return trim($fields);
     }
 
     protected function generateViews()
