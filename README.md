@@ -9,6 +9,7 @@ A powerful Laravel package that generates complete CRUD structure with repositor
 - ✅ Service Classes
 - ✅ Form Request Validation
 - ✅ Beautiful Bootstrap views
+- ✅ Layouts/app.blade.php will be created
 - ✅ Customizable fields and validation rules
 - ✅ Sample data generation
 - ✅ Follows Laravel best practices
