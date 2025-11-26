@@ -1,41 +1,92 @@
 @extends('layouts.app')
 
+@section('title', '{{modelName}} Details')
+
+@section('page-title', '{{modelName}} Details')
+
+@section('page-actions')
+    <a href="{{ route('{{viewPath}}.edit', ${{modelVariable}}->id) }}" class="btn btn-warning btn-sm">
+        <i class="fas fa-edit"></i> Edit
+    </a>
+    <a href="{{ route('{{viewPath}}.index') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+@endsection
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h2>{{modelName}} Details</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-info-circle"></i> {{modelName}} Information
+                </h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th width="30%">ID</th>
+                        <td>#{{ ${{modelVariable}}->id }}</td>
+                    </tr>
+                    {{fieldDetails}}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <!-- Audit Information -->
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-history"></i> Audit Trail
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="callout callout-info">
+                    <h5><i class="fas fa-user-plus"></i> Created</h5>
+                    <p><strong>By:</strong> {{ ${{modelVariable}}->creator->name ?? 'System' }}</p>
+                    <p><strong>On:</strong> {{ ${{modelVariable}}->created_at->format('M d, Y \\a\\t h:i A') }}</p>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>ID:</strong> {{ ${{modelVariable}}->id }}</p>
-                            {{showFields}}
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Audit Information</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong>Created By:</strong> {{ ${{modelVariable}}->creator->name ?? 'N/A' }}</p>
-                                    <p><strong>Created At:</strong> {{ ${{modelVariable}}->created_at->format('M d, Y H:i') }}</p>
-                                    <p><strong>Updated By:</strong> {{ ${{modelVariable}}->updater->name ?? 'N/A' }}</p>
-                                    <p><strong>Updated At:</strong> {{ ${{modelVariable}}->updated_at->format('M d, Y H:i') }}</p>
-                                    @if(${{modelVariable}}->deleted_at)
-                                        <p><strong>Deleted By:</strong> {{ ${{modelVariable}}->deleter->name ?? 'N/A' }}</p>
-                                        <p><strong>Deleted At:</strong> {{ ${{modelVariable}}->deleted_at->format('M d, Y H:i') }}</p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="{{ route('{{viewPath}}.edit', ${{modelVariable}}->id) }}" class="btn btn-warning">Edit</a>
-                        <a href="{{ route('{{viewPath}}.index') }}" class="btn btn-secondary">Back to List</a>
-                    </div>
+
+                <div class="callout callout-warning">
+                    <h5><i class="fas fa-user-edit"></i> Last Updated</h5>
+                    <p><strong>By:</strong> {{ ${{modelVariable}}->updater->name ?? 'System' }}</p>
+                    <p><strong>On:</strong> {{ ${{modelVariable}}->updated_at->format('M d, Y \\a\\t h:i A') }}</p>
+                </div>
+
+                @if(${{modelVariable}}->deleted_at)
+                <div class="callout callout-danger">
+                    <h5><i class="fas fa-user-times"></i> Deleted</h5>
+                    <p><strong>By:</strong> {{ ${{modelVariable}}->deleter->name ?? 'System' }}</p>
+                    <p><strong>On:</strong> {{ ${{modelVariable}}->deleted_at->format('M d, Y \\a\\t h:i A') }}</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h3>
+            </div>
+            <div class="card-body text-center">
+                <div class="btn-group-vertical" style="width: 100%;">
+                    <a href="{{ route('{{viewPath}}.edit', ${{modelVariable}}->id) }}"
+                       class="btn btn-warning mb-2">
+                        <i class="fas fa-edit"></i> Edit {{modelName}}
+                    </a>
+                    <form action="{{ route('{{viewPath}}.destroy', ${{modelVariable}}->id) }}"
+                          method="POST"
+                          class="d-inline w-100"
+                          data-confirm>
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-trash"></i> Delete {{modelName}}
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

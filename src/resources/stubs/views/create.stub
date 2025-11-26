@@ -1,21 +1,55 @@
 @extends('layouts.app')
 
+@section('title', 'Create {{modelName}}')
+
+@section('page-title', 'Create New {{modelName}}')
+
+@section('page-actions')
+    <a href="{{ route('{{viewPath}}.index') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+@endsection
+
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h2>Create New {{modelName}}</h2>
-                </div>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">{{modelName}} Information</h3>
+            </div>
+            <!-- form start -->
+            <form action="{{ route('{{viewPath}}.store') }}" method="POST">
+                @csrf
                 <div class="card-body">
-                    <form action="{{ route('{{viewPath}}.store') }}" method="POST">
-                        @csrf
-                        {{fields}}
-                        <button type="submit" class="btn btn-success">Create {{modelName}}</button>
-                        <a href="{{ route('{{viewPath}}.index') }}" class="btn btn-secondary">Cancel</a>
-                    </form>
+                    {{fields}}
                 </div>
+                <!-- /.card-body -->
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create {{modelName}}
+                    </button>
+                    <a href="{{ route('{{viewPath}}.index') }}" class="btn btn-default">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+        <!-- /.card -->
+    </div>
+    <div class="col-md-4">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-info-circle"></i> Quick Tips
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Fill in all required fields marked with <span class="text-danger">*</span>.
+                </p>
+                <p class="text-muted">
+                    Ensure all information is accurate before submitting.
+                </p>
             </div>
         </div>
     </div>
