@@ -26,6 +26,8 @@ class {{modelName}}Controller extends Controller
     {
         try {
             $perPage = $request->get('per_page', 15);
+            $withRelations = $request->get('with', '');{{apiIndexRelations}}
+
             ${{modelPluralVariable}} = $this->service->paginate($perPage);
 
             return response()->json([
@@ -48,7 +50,7 @@ class {{modelName}}Controller extends Controller
     public function store(Store{{modelName}}Request $request): JsonResponse
     {
         try {
-            ${{modelVariable}} = $this->service->create($request->validated());
+            ${{modelVariable}} = $this->service->create($request->validated());{{apiStoreRelations}}
 
             return response()->json([
                 'success' => true,
@@ -70,7 +72,7 @@ class {{modelName}}Controller extends Controller
     public function show($id): JsonResponse
     {
         try {
-            ${{modelVariable}} = $this->service->getById($id);
+            ${{modelVariable}} = $this->service->getById($id);{{apiShowRelations}}
 
             return response()->json([
                 'success' => true,
@@ -97,7 +99,7 @@ class {{modelName}}Controller extends Controller
     public function update(Update{{modelName}}Request $request, $id): JsonResponse
     {
         try {
-            ${{modelVariable}} = $this->service->update($id, $request->validated());
+            ${{modelVariable}} = $this->service->update($id, $request->validated());{{apiUpdateRelations}}
 
             return response()->json([
                 'success' => true,
@@ -142,5 +144,5 @@ class {{modelName}}Controller extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
+    }{{apiAdditionalMethods}}
 }

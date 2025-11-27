@@ -44,12 +44,12 @@ php artisan make:crud Product --fields="name:string,description:text,price:decim
 ### Relation Management
 
 ```bash
-php artisan make:crud Post --fields="title:string,content:text" --relations="belongsTo:User,hasMany:Comment"
+php artisan make:crud Category --fields="name:string,description:text"
 ```
 
 
 ```bash
-php artisan make:crud Comment --fields="content:text" --relations="belongsTo:Post,belongsTo:User"
+php artisan make:crud SubCategory --fields="name:string,description:text" --relations="belongsTo:Category"
 ```
 
 ## 🛠 Field Types Supported

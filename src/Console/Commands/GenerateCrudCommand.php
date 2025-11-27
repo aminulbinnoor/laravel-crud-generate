@@ -529,14 +529,142 @@ class GenerateCrudCommand extends Command
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
             '{{modelPlural}}' => $this->modelPlural,
-            '{{modelVariable}}' => Str::camel($this->modelName),
+            '{{modelVariable}}' => $this->modelVariable,
             '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
             '{{viewPath}}' => $this->modelKebab,
+            '{{apiIndexRelations}}' => $this->generateApiIndexRelations(),
+            '{{apiStoreRelations}}' => $this->generateApiStoreRelations(),
+            '{{apiShowRelations}}' => $this->generateApiShowRelations(),
+            '{{apiUpdateRelations}}' => $this->generateApiUpdateRelations(),
+            '{{apiAdditionalMethods}}' => $this->generateApiAdditionalMethods(),
         ];
 
         $controllerPath = config('crud-generator.paths.api-controllers', 'Http/Controllers/API');
         $path = app_path("{$controllerPath}/{$this->modelName}Controller.php");
         $this->createFile($path, $stub, $replacements);
+    }
+
+    protected function generateApiIndexRelations()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $code = "\n            \n            // Load relationships if requested\n            ";
+        $code .= "if (\$withRelations) {\n";
+        $code .= "                \$relations = explode(',', \$withRelations);\n";
+        $code .= "                \${$this->modelVariable}->load(\$relations);\n"; // modelPluralVariable
+        $code .= "            }";
+
+        return $code;
+    }
+
+    protected function generateApiStoreRelations()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $code = "\n\n            // Load relationships for the created resource\n            ";
+
+        $relationsToLoad = [];
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                $methodName = $this->getRelationMethodName($relationType, $relatedModel);
+                $relationsToLoad[] = $methodName;
+            }
+        }
+
+        if (!empty($relationsToLoad)) {
+            $code .= "\${$this->modelVariable}->load([" . implode(', ', array_map(function($rel) { return "'{$rel}'"; }, $relationsToLoad)) . "]);";
+        }
+
+        return $code;
+    }
+
+    protected function generateApiShowRelations()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $code = "\n\n            // Load all relationships for the resource\n            ";
+
+        $relationsToLoad = [];
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                $methodName = $this->getRelationMethodName($relationType, $relatedModel);
+                $relationsToLoad[] = $methodName;
+            }
+        }
+
+        if (!empty($relationsToLoad)) {
+            $code .= "\${$this->modelVariable}->load([" . implode(', ', array_map(function($rel) { return "'{$rel}'"; }, $relationsToLoad)) . "]);";
+        }
+
+        return $code;
+    }
+
+    protected function generateApiUpdateRelations()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $code = "\n\n            // Load relationships for the updated resource\n            ";
+
+        $relationsToLoad = [];
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                $methodName = $this->getRelationMethodName($relationType, $relatedModel);
+                $relationsToLoad[] = $methodName;
+            }
+        }
+
+        if (!empty($relationsToLoad)) {
+            $code .= "\${$this->modelVariable}->load([" . implode(', ', array_map(function($rel) { return "'{$rel}'"; }, $relationsToLoad)) . "]);";
+        }
+
+        return $code;
+    }
+
+    protected function generateApiAdditionalMethods()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $methods = "\n\n    /**\n     * Get related data for forms\n     */\n    public function getRelatedData(): JsonResponse\n    {\n        try {\n            \$relatedData = [];\n            ";
+
+        // Add belongsTo relations for form dropdowns
+        if (!empty($this->relations['belongsTo'])) {
+            foreach ($this->relations['belongsTo'] as $relatedModel) {
+                $relationVariable = Str::camel(Str::plural($relatedModel));
+                $methods .= "\n            \${$relationVariable} = \\App\\Models\\{$relatedModel}::select('id', 'name')->get();\n";
+                $methods .= "            \$relatedData['{$relationVariable}'] = \${$relationVariable};";
+            }
+        }
+
+        $methods .= "\n\n            return response()->json([\n                'success' => true,\n                'data' => \$relatedData,\n                'message' => 'Related data retrieved successfully.'\n            ]);\n        } catch (\\Exception \$e) {\n            return response()->json([\n                'success' => false,\n                'message' => 'Failed to retrieve related data.',\n                'error' => \$e->getMessage()\n            ], 500);\n        }\n    }";
+
+        // Add specific relationship methods
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                if ($relationType === 'hasMany') {
+                    $methods .= $this->generateApiHasManyMethod($relatedModel);
+                }
+            }
+        }
+
+        return $methods;
+    }
+
+    protected function generateApiHasManyMethod($relatedModel)
+    {
+        $relatedVariable = Str::camel(Str::plural($relatedModel));
+        $methodName = 'get' . Str::plural($relatedModel) . 'By' . $this->modelName;
+
+        return "\n\n    /**\n     * Get {$relatedModel} records for specific {$this->modelName}\n     */\n    public function {$methodName}(\$id): JsonResponse\n    {\n        try {\n            \${$this->modelVariable} = \$this->service->getById(\$id);\n            \${$relatedVariable} = \${$this->modelVariable}->{$relatedVariable};\n\n            return response()->json([\n                'success' => true,\n                'data' => \${$relatedVariable},\n                'message' => '{$relatedModel} retrieved successfully for {$this->modelName}.'\n            ]);\n        } catch (ModelNotFoundException \$e) {\n            return response()->json([\n                'success' => false,\n                'message' => '{$this->modelName} not found.'\n            ], 404);\n        } catch (\\Exception \$e) {\n            return response()->json([\n                'success' => false,\n                'message' => 'Failed to retrieve {$relatedModel} for {$this->modelName}.',\n                'error' => \$e->getMessage()\n            ], 500);\n        }\n    }";
     }
 
     protected function generateStoreRequests()
