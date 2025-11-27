@@ -25,20 +25,11 @@ composer require aminul/crud-generate
 
 That's it! No configuration needed.
 
-## ⚡ Quick Start
-
-Generate a complete CRUD for any model with a single command:
-
-```bash
-php artisan make:crud Product --fields="name:string,sku:string:unique,description:text,price:decimal,quantity:integer,is_active:boolean"
-```
 
 ## 🎯 Usage Examples
 
-### Basic Product CRUD
-
 ```bash
-php artisan make:crud Product --fields="name:string,description:text,price:decimal,quantity:integer"
+php artisan make:crud Product --fields="name:string,sku:string:unique,description:text,price:decimal,quantity:integer,is_active:boolean"
 ```
 
 ### Relation Management
