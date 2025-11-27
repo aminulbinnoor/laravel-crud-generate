@@ -21,7 +21,7 @@
             <form action="{{ route('{{viewPath}}.store') }}" method="POST">
                 @csrf
                 <div class="card-body">
-                    {{fields}}
+                    {{fields}}{{relationFields}}
                 </div>
                 <!-- /.card-body -->
                 <div class="card-footer">

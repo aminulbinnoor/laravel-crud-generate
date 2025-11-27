@@ -51,9 +51,11 @@ class GenerateCrudCommand extends Command
         $this->generateRepository();
         $this->generateService();
         $this->generateController();
+        $this->generateEditControllerRelations();
         $this->generateApiController();
         $this->generateStoreRequests();
         $this->generateUpdateRequests();
+        $this->generateRelationFields();
         // Generate layouts if not exists
         $this->generateLayouts();
         $this->generateViews();
@@ -335,12 +337,35 @@ class GenerateCrudCommand extends Command
         $replacements = [
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
-            '{{modelVariable}}' => Str::camel($this->modelName),
+            '{{modelVariable}}' => $this->modelVariable,
+            '{{repositoryRelations}}' => $this->generateRepositoryRelations(),
         ];
 
         $repoPath = config('crud-generator.paths.repositories', 'Repositories');
         $path = app_path("{$repoPath}/{$this->modelName}Repository.php");
         $this->createFile($path, $stub, $replacements);
+    }
+
+    protected function generateRepositoryRelations()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $relationsCode = "\n\n    // Relationship methods\n";
+
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                $methodName = 'with' . $relatedModel;
+                $relationsCode .= "
+        public function {$methodName}()
+        {
+            return \$this->model->with('" . Str::camel($relatedModel) . "');
+        }";
+            }
+        }
+
+        return $relationsCode;
     }
 
     protected function generateService()
@@ -349,12 +374,52 @@ class GenerateCrudCommand extends Command
         $replacements = [
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
-            '{{modelVariable}}' => Str::camel($this->modelName),
+            '{{modelVariable}}' => $this->modelVariable,
+            '{{serviceRelations}}' => $this->generateServiceRelations(),
         ];
 
         $servicePath = config('crud-generator.paths.services', 'Services');
         $path = app_path("{$servicePath}/{$this->modelName}Service.php");
         $this->createFile($path, $stub, $replacements);
+    }
+
+    protected function generateServiceRelations()
+    {
+        if (empty($this->relations)) {
+            return '';
+        }
+
+        $relationsCode = "\n\n    // Relationship methods\n";
+
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                $methodName = $this->getRelationMethodName($relationType, $relatedModel);
+                $relationsCode .= $this->generateServiceRelationMethod($relationType, $relatedModel, $methodName);
+            }
+        }
+
+        return $relationsCode;
+    }
+
+    protected function generateServiceRelationMethod($relationType, $relatedModel, $methodName)
+    {
+        $methods = [
+            'hasMany' => "
+        public function get{$relatedModel}By{$this->modelName}(\$id)
+        {
+            \${$this->modelVariable} = \$this->repository->find(\$id);
+            return \${$this->modelVariable}->{$methodName};
+        }",
+
+            'belongsTo' => "
+        public function get{$relatedModel}For{$this->modelName}(\$id)
+        {
+            \${$this->modelVariable} = \$this->repository->find(\$id);
+            return \${$this->modelVariable}->{$methodName};
+        }",
+        ];
+
+        return $methods[$relationType] ?? '';
     }
 
     protected function generateController()
@@ -364,14 +429,98 @@ class GenerateCrudCommand extends Command
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
             '{{modelPlural}}' => $this->modelPlural,
-            '{{modelVariable}}' => Str::camel($this->modelName),
+            '{{modelVariable}}' => $this->modelVariable,
             '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
             '{{viewPath}}' => $this->modelKebab,
+            '{{controllerRelations}}' => $this->generateControllerRelations(),
         ];
 
         $controllerPath = config('crud-generator.paths.controllers', 'Http/Controllers');
         $path = app_path("{$controllerPath}/{$this->modelName}Controller.php");
         $this->createFile($path, $stub, $replacements);
+    }
+
+    protected function generateControllerRelations()
+    {
+        if (empty($this->relations['belongsTo'])) {
+            return '';
+        }
+
+        $relationsCode = "\n\n        // Load related data for forms\n";
+        foreach ($this->relations['belongsTo'] as $relatedModel) {
+            $relationVariable = Str::camel(Str::plural($relatedModel));
+            $relationModel = $relatedModel;
+            $relationsCode .= "        \${$relationVariable} = \\App\\Models\\{$relationModel}::all();\n";
+        }
+
+        $relationsCode .= "        ";
+
+        // For create and edit methods
+        $compactVars = ["'{$this->modelVariable}'"];
+        foreach ($this->relations['belongsTo'] as $relatedModel) {
+            $relationVariable = Str::camel(Str::plural($relatedModel));
+            $compactVars[] = "'{$relationVariable}'";
+        }
+
+        $relationsCode .= "return view('{$this->modelKebab}.create', compact(" . implode(', ', $compactVars) . "));";
+
+        return $relationsCode;
+    }
+
+    protected function generateRelationFields()
+    {
+        if (empty($this->relations['belongsTo'])) {
+            return '';
+        }
+
+        $fields = '';
+        foreach ($this->relations['belongsTo'] as $relatedModel) {
+            $foreignKey = Str::snake($relatedModel) . '_id';
+            $label = Str::title(str_replace('_', ' ', $relatedModel));
+            $relationVariable = Str::camel(Str::plural($relatedModel));
+
+            $fields .= "
+                        <div class=\"form-group\">
+                            <label for=\"{$foreignKey}\">{$label} <span class=\"text-danger\">*</span></label>
+                            <select name=\"{$foreignKey}\" id=\"{$foreignKey}\" class=\"form-control select2\" required>
+                                <option value=\"\">Select {$label}</option>
+                                @foreach(\${$relationVariable} as \$item)
+                                    <option value=\"{{ \$item->id }}\" {{ old('{$foreignKey}') == \$item->id ? 'selected' : '' }}>
+                                        {{ \$item->name ?? \$item->title ?? \$item->id }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('{$foreignKey}')
+                                <span class=\"text-danger\">{{ \$message }}</span>
+                            @enderror
+                        </div>";
+        }
+
+        return $fields;
+    }
+
+    protected function generateEditControllerRelations()
+    {
+        if (empty($this->relations['belongsTo'])) {
+            return "\n        return view('{$this->modelKebab}.edit', compact('{$this->modelVariable}'));";
+        }
+
+        $relationsCode = "\n\n        // Load related data for edit form\n";
+        foreach ($this->relations['belongsTo'] as $relatedModel) {
+            $relationVariable = Str::camel(Str::plural($relatedModel));
+            $relationModel = $relatedModel;
+            $relationsCode .= "        \${$relationVariable} = \\App\\Models\\{$relationModel}::all();\n";
+        }
+
+        $compactVars = ["'{$this->modelVariable}'"];
+        foreach ($this->relations['belongsTo'] as $relatedModel) {
+            $relationVariable = Str::camel(Str::plural($relatedModel));
+            $compactVars[] = "'{$relationVariable}'";
+        }
+
+        $relationsCode .= "        return view('{$this->modelKebab}.edit', compact(" . implode(', ', $compactVars) . "));";
+
+        return $relationsCode;
     }
 
     //generate api controller
@@ -400,10 +549,10 @@ class GenerateCrudCommand extends Command
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
             '{{rules}}' => $this->generateValidationRules(),
+            '{{relationRules}}' => $this->generateRelationValidationRules(),
         ];
 
         $requestPath = config('crud-generator.paths.requests', 'Http/Requests');
-
         $storePath = app_path("{$requestPath}/Store{$this->modelName}Request.php");
         $this->createFile($storePath, $stub, $replacements);
     }
@@ -415,10 +564,10 @@ class GenerateCrudCommand extends Command
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
             '{{rules}}' => $this->generateValidationRules(),
+            '{{relationRules}}' => $this->generateRelationValidationRules(),
         ];
 
         $requestPath = config('crud-generator.paths.requests', 'Http/Requests');
-
         $updatePath = app_path("{$requestPath}/Update{$this->modelName}Request.php");
         $this->createFile($updatePath, $stub, $replacements);
     }
@@ -454,10 +603,11 @@ class GenerateCrudCommand extends Command
             $replacements = [
                 '{{modelName}}' => $this->modelName,
                 '{{modelPlural}}' => $this->modelPlural,
-                '{{modelVariable}}' => Str::camel($this->modelName),
+                '{{modelVariable}}' => $this->modelVariable,
                 '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
                 '{{viewPath}}' => $this->modelKebab,
                 '{{fields}}' => $this->generateViewFields(),
+                '{{relationFields}}' => $this->generateRelationFields(),
                 '{{tableHeaders}}' => $this->generateTableHeaders(),
                 '{{tableRows}}' => $this->generateTableRows(),
                 '{{showFields}}' => $this->generateShowFields(),
@@ -580,6 +730,25 @@ class GenerateCrudCommand extends Command
         }
 
         return implode(",\n            ", $rules);
+    }
+
+    protected function generateRelationValidationRules()
+    {
+        if (empty($this->relations['belongsTo'])) {
+            return '';
+        }
+
+        $rules = [];
+        foreach ($this->relations['belongsTo'] as $relatedModel) {
+            $foreignKey = Str::snake($relatedModel) . '_id';
+            $rules[] = "'{$foreignKey}' => 'required|exists:" . Str::plural(Str::snake($relatedModel)) . ",id'";
+        }
+
+        if (empty($rules)) {
+            return '';
+        }
+
+        return ",\n            " . implode(",\n            ", $rules);
     }
 
     protected function generateViewFields()

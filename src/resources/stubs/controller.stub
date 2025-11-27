@@ -24,7 +24,7 @@ class {{modelName}}Controller extends Controller
 
     public function create()
     {
-        return view('{{viewPath}}.create');
+        {{controllerRelations}}
     }
 
     public function store(Store{{modelName}}Request $request)
@@ -41,8 +41,7 @@ class {{modelName}}Controller extends Controller
 
     public function edit($id)
     {
-        ${{modelVariable}} = $this->service->getById($id);
-        return view('{{viewPath}}.edit', compact('{{modelVariable}}'));
+        ${{modelVariable}} = $this->service->getById($id);{{editControllerRelations}}
     }
 
     public function update(Update{{modelName}}Request $request, $id)
