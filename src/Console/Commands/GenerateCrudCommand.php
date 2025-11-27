@@ -176,37 +176,37 @@ class GenerateCrudCommand extends Command
             'hasMany' => "
     public function {$methodName}()
     {
-        return \$this->{$relationType}({$relatedModel}::class);
+        return \$this->{$relationType}(\\App\\Models\\{$relatedModel}::class);
     }",
 
             'hasOne' => "
     public function {$methodName}()
     {
-        return \$this->{$relationType}({$relatedModel}::class);
+        return \$this->{$relationType}(\\App\\Models\\{$relatedModel}::class);
     }",
 
             'belongsTo' => "
     public function {$methodName}()
     {
-        return \$this->{$relationType}({$relatedModel}::class);
+        return \$this->{$relationType}(\\App\\Models\\{$relatedModel}::class);
     }",
 
             'belongsToMany' => "
     public function {$methodName}()
     {
-        return \$this->{$relationType}({$relatedModel}::class);
+        return \$this->{$relationType}(\\App\\Models\\{$relatedModel}::class);
     }",
 
             'morphMany' => "
     public function {$methodName}()
     {
-        return \$this->{$relationType}({$relatedModel}::class);
+        return \$this->{$relationType}(\\App\\Models\\{$relatedModel}::class);
     }",
 
             'morphOne' => "
     public function {$methodName}()
     {
-        return \$this->{$relationType}({$relatedModel}::class);
+        return \$this->{$relationType}(\\App\\Models\\{$relatedModel}::class);
     }",
 
             'morphTo' => "
