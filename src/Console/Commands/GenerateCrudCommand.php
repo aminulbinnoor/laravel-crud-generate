@@ -433,6 +433,7 @@ class GenerateCrudCommand extends Command
             '{{modelPluralVariable}}' => Str::camel($this->modelPlural),
             '{{viewPath}}' => $this->modelKebab,
             '{{controllerRelations}}' => $this->generateControllerRelations(),
+            '{{editControllerRelations}}' => $this->generateEditControllerRelations(),
         ];
 
         $controllerPath = config('crud-generator.paths.controllers', 'Http/Controllers');
@@ -443,26 +444,23 @@ class GenerateCrudCommand extends Command
     protected function generateControllerRelations()
     {
         if (empty($this->relations['belongsTo'])) {
-            return '';
+            return "return view('{$this->modelKebab}.create');";
         }
 
-        $relationsCode = "\n\n        // Load related data for forms\n";
+        $relationsCode = "\n        // Load related data for forms\n";
         foreach ($this->relations['belongsTo'] as $relatedModel) {
             $relationVariable = Str::camel(Str::plural($relatedModel));
             $relationModel = $relatedModel;
             $relationsCode .= "        \${$relationVariable} = \\App\\Models\\{$relationModel}::all();\n";
         }
 
-        $relationsCode .= "        ";
-
-        // For create and edit methods
-        $compactVars = ["'{$this->modelVariable}'"];
+        $compactVars = [];
         foreach ($this->relations['belongsTo'] as $relatedModel) {
             $relationVariable = Str::camel(Str::plural($relatedModel));
             $compactVars[] = "'{$relationVariable}'";
         }
 
-        $relationsCode .= "return view('{$this->modelKebab}.create', compact(" . implode(', ', $compactVars) . "));";
+        $relationsCode .= "        return view('{$this->modelKebab}.create', compact(" . implode(', ', $compactVars) . "));";
 
         return $relationsCode;
     }
