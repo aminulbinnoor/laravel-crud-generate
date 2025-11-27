@@ -11,7 +11,6 @@ class GenerateCrudCommand extends Command
     protected $modelVariable;
     protected $signature = 'make:crud {name : The name of the model}
                                       {--fields= : Fields for the model (e.g., "name:string,email:string")}
-                                      {--relations= : Define relationships (e.g., "hasMany:Comment,belongsTo:User")}
                                       {--sample : Generate with sample data}';
 
     protected $description = 'Generate complete CRUD structure with repository pattern';
@@ -22,7 +21,6 @@ class GenerateCrudCommand extends Command
     protected $modelSnake;
     protected $modelKebab;
     protected $fields = [];
-    protected $relations = [];
 
     public function __construct(Filesystem $files)
     {
@@ -39,7 +37,6 @@ class GenerateCrudCommand extends Command
         $this->modelVariable = Str::camel($this->modelName);
 
         $this->parseFields();
-        $this->parseRelations();
 
         // Generate BaseModel first
         $this->generateBaseModel();
@@ -64,10 +61,6 @@ class GenerateCrudCommand extends Command
         $this->info("CRUD for {$this->modelName} generated successfully!");
         $this->info("Run: php artisan migrate");
         $this->info("Make sure you have a User model with id field for the audit relations.");
-
-        if (!empty($this->relations)) {
-            $this->info("Relationships defined: " . implode(', ', array_keys($this->relations)));
-        }
     }
 
     protected function parseFields()
@@ -82,24 +75,6 @@ class GenerateCrudCommand extends Command
         }
     }
 
-    protected function parseRelations()
-    {
-        $relationsInput = $this->option('relations');
-        if (!$relationsInput) {
-            return;
-        }
-
-        foreach (explode(',', $relationsInput) as $relation) {
-            $parts = explode(':', $relation);
-            if (count($parts) === 2) {
-                $relationType = trim($parts[0]);
-                $relatedModel = trim($parts[1]);
-
-                $this->relations[$relationType][] = $relatedModel;
-            }
-        }
-    }
-
     protected function generateModel()
     {
         $stub = $this->getStub('model');
@@ -108,12 +83,28 @@ class GenerateCrudCommand extends Command
             '{{modelName}}' => $this->modelName,
             '{{fillable}}' => $this->generateFillable(),
             '{{casts}}' => $this->generateCasts(),
-            '{{relations}}' => $this->generateRelations(),
-            '{{foreignKeys}}' => $this->generateForeignKeys(),
         ];
 
         $path = app_path('Models/' . $this->modelName . '.php');
         $this->createFile($path, $stub, $replacements);
+    }
+
+    protected function generateBaseModel()
+    {
+        $stub = $this->getStub('base-model');
+        $replacements = [
+            '{{namespace}}' => config('crud-generator.namespace', 'App'),
+        ];
+
+        $path = app_path('Models/BaseModel.php');
+
+        // Only create BaseModel if it doesn't exist
+        if (!$this->files->exists($path)) {
+            $this->createFile($path, $stub, $replacements);
+            $this->info("Created: BaseModel.php");
+        } else {
+            $this->info("BaseModel already exists, skipping...");
+        }
     }
 
     protected function generateMigration()
@@ -126,7 +117,6 @@ class GenerateCrudCommand extends Command
         $replacements = [
             '{{tableName}}' => $tableName,
             '{{migrationFields}}' => $this->generateMigrationFields(),
-            '{{foreignKeys}}' => $this->generateMigrationForeignKeys(),
         ];
 
         $timestamp = date('Y_m_d_His');
@@ -134,121 +124,6 @@ class GenerateCrudCommand extends Command
 
         $this->createFile($path, $stub, $replacements);
         $this->info("Created: {$timestamp}_{$migrationName}.php");
-    }
-
-    protected function generateRelations()
-    {
-        if (empty($this->relations)) {
-            return '';
-        }
-
-        $relationsCode = "\n    // Relationships\n";
-
-        foreach ($this->relations as $relationType => $relatedModels) {
-            foreach ($relatedModels as $relatedModel) {
-                $methodName = $this->getRelationMethodName($relationType, $relatedModel);
-                $relationsCode .= $this->generateRelationMethod($relationType, $relatedModel, $methodName);
-            }
-        }
-
-        return $relationsCode;
-    }
-
-    protected function getRelationMethodName($relationType, $relatedModel)
-    {
-        $methodNames = [
-            'hasMany' => Str::camel(Str::plural($relatedModel)),
-            'hasOne' => Str::camel($relatedModel),
-            'belongsTo' => Str::camel($relatedModel),
-            'belongsToMany' => Str::camel(Str::plural($relatedModel)),
-            'morphMany' => Str::camel(Str::plural($relatedModel)),
-            'morphOne' => Str::camel($relatedModel),
-            'morphTo' => 'parent',
-        ];
-
-        return $methodNames[$relationType] ?? Str::camel($relatedModel);
-    }
-
-    protected function generateRelationMethod($relationType, $relatedModel, $methodName)
-    {
-        $methods = [
-            'hasMany' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}({$relatedModel}::class);
-    }",
-
-            'hasOne' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}({$relatedModel}::class);
-    }",
-
-            'belongsTo' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}({$relatedModel}::class);
-    }",
-
-            'belongsToMany' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}({$relatedModel}::class);
-    }",
-
-            'morphMany' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}({$relatedModel}::class);
-    }",
-
-            'morphOne' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}({$relatedModel}::class);
-    }",
-
-            'morphTo' => "
-    public function {$methodName}()
-    {
-        return \$this->{$relationType}();
-    }",
-        ];
-
-        return $methods[$relationType] ?? '';
-    }
-
-    protected function generateForeignKeys()
-    {
-        if (empty($this->relations['belongsTo'])) {
-            return '';
-        }
-
-        $foreignKeys = "\n    // Foreign keys for relationships\n";
-
-        foreach ($this->relations['belongsTo'] as $relatedModel) {
-            $foreignKey = Str::snake($relatedModel) . '_id';
-            $foreignKeys .= "    '{$foreignKey}',\n";
-        }
-
-        return $foreignKeys;
-    }
-
-    protected function generateMigrationForeignKeys()
-    {
-        if (empty($this->relations['belongsTo'])) {
-            return '';
-        }
-
-        $foreignKeys = "\n";
-
-        foreach ($this->relations['belongsTo'] as $relatedModel) {
-            $foreignKey = Str::snake($relatedModel) . '_id';
-            $tableName = Str::plural(Str::snake($relatedModel));
-            $foreignKeys .= "            \$table->foreignId('{$foreignKey}')->constrained('{$tableName}')->onDelete('cascade');\n";
-        }
-
-        return $foreignKeys;
     }
 
     protected function generateMigrationFields()
@@ -277,41 +152,6 @@ class GenerateCrudCommand extends Command
         ];
 
         return $definitions[$type] ?? "string('{$field}')";
-    }
-
-    // ... (keep all other existing methods the same, just add the new ones above)
-
-    protected function generateFillable()
-    {
-        $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
-
-        // Add foreign keys to fillable
-        if (!empty($this->relations['belongsTo'])) {
-            foreach ($this->relations['belongsTo'] as $relatedModel) {
-                $foreignKey = Str::snake($relatedModel) . '_id';
-                $fillable[] = $foreignKey;
-            }
-        }
-
-        return "[\n            '" . implode("',\n            '", $fillable) . "'\n        ]";
-    }
-
-    protected function generateBaseModel()
-    {
-        $stub = $this->getStub('base-model');
-        $replacements = [
-            '{{namespace}}' => config('crud-generator.namespace', 'App'),
-        ];
-
-        $path = app_path('Models/BaseModel.php');
-
-        // Only create BaseModel if it doesn't exist
-        if (!$this->files->exists($path)) {
-            $this->createFile($path, $stub, $replacements);
-            $this->info("Created: BaseModel.php");
-        } else {
-            $this->info("BaseModel already exists, skipping...");
-        }
     }
 
     protected function generateRepositoryInterface()
@@ -514,6 +354,12 @@ class GenerateCrudCommand extends Command
 
         $this->files->put($path, $content);
         $this->info("Created: {$path}");
+    }
+
+    protected function generateFillable()
+    {
+        $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
+        return "[\n            '" . implode("',\n            '", $fillable) . "'\n        ]";
     }
 
     protected function generateCasts()

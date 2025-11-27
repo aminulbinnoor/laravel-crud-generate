@@ -14,7 +14,7 @@ class {{modelName}} extends BaseModel
      *
      * @var array<int, string>
      */
-    protected $fillable = {{fillable}};
+    protected $fillable = {{fillable}}{{foreignKeys}};
 
     /**
      * The attributes that should be cast.
@@ -30,6 +30,8 @@ class {{modelName}} extends BaseModel
      */
     protected $with = [
         'creator',
-        'updater',
+        'updater',{{relationWith}}
     ];
+
+    {{relations}}
 }
