@@ -107,7 +107,7 @@ class GenerateCrudCommand extends Command
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
             '{{fillable}}' => $this->generateFillable(),
-            '{{foreignKeys}}' => $this->generateForeignKeys(),
+            //'{{foreignKeys}}' => $this->generateForeignKeys(),
             '{{casts}}' => $this->generateCasts(),
             '{{relationWith}}' => $this->generateRelationWith(),
             '{{relations}}' => $this->generateRelations(),
@@ -219,20 +219,20 @@ class GenerateCrudCommand extends Command
         return $methods[$relationType] ?? '';
     }
 
-    protected function generateForeignKeys()
-    {
-        if (empty($this->relations['belongsTo'])) {
-            return '';
-        }
+    // protected function generateForeignKeys()
+    // {
+    //     if (empty($this->relations['belongsTo'])) {
+    //         return '';
+    //     }
 
-        $foreignKeys = '';
-        foreach ($this->relations['belongsTo'] as $relatedModel) {
-            $foreignKey = Str::snake($relatedModel) . '_id';
-            $foreignKeys .= ",\n            '{$foreignKey}'";
-        }
+    //     $foreignKeys = '';
+    //     foreach ($this->relations['belongsTo'] as $relatedModel) {
+    //         $foreignKey = Str::snake($relatedModel) . '_id';
+    //         $foreignKeys .= ",\n            '{$foreignKey}'";
+    //     }
 
-        return $foreignKeys;
-    }
+    //     return $foreignKeys;
+    // }
 
     protected function generateMigrationForeignKeys()
     {
@@ -283,11 +283,13 @@ class GenerateCrudCommand extends Command
     {
         $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
 
-        // Add foreign keys to fillable
+        // Add foreign keys to fillable (only if they don't already exist)
         if (!empty($this->relations['belongsTo'])) {
             foreach ($this->relations['belongsTo'] as $relatedModel) {
                 $foreignKey = Str::snake($relatedModel) . '_id';
-                $fillable[] = $foreignKey;
+                if (!in_array($foreignKey, $fillable)) {
+                    $fillable[] = $foreignKey;
+                }
             }
         }
 

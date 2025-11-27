@@ -14,7 +14,7 @@ class {{modelName}} extends BaseModel
      *
      * @var array<int, string>
      */
-    protected $fillable = [{{fillable}}{{foreignKeys}}
+    protected $fillable = [{{fillable}}
     ];
 
     /**
@@ -31,7 +31,5 @@ class {{modelName}} extends BaseModel
      * @var array
      */
     protected $with = [{{relationWith}}
-    ];
-
-    {{relations}}
+    ];{{relations}}
 }
