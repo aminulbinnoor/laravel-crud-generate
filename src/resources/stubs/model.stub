@@ -14,23 +14,23 @@ class {{modelName}} extends BaseModel
      *
      * @var array<int, string>
      */
-    protected $fillable = {{fillable}}{{foreignKeys}};
+    protected $fillable = [{{fillable}}{{foreignKeys}}
+    ];
 
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
-    protected $casts = {{casts}};
+    protected $casts = [{{casts}}
+    ];
 
     /**
      * Relationships that should be loaded by default.
      *
      * @var array
      */
-    protected $with = [
-        'creator',
-        'updater',{{relationWith}}
+    protected $with = [{{relationWith}}
     ];
 
     {{relations}}

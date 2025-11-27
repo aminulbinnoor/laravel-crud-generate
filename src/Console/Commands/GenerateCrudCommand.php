@@ -107,9 +107,10 @@ class GenerateCrudCommand extends Command
             '{{namespace}}' => config('crud-generator.namespace', 'App'),
             '{{modelName}}' => $this->modelName,
             '{{fillable}}' => $this->generateFillable(),
-            '{{casts}}' => $this->generateCasts(),
-            '{{relations}}' => $this->generateRelations(),
             '{{foreignKeys}}' => $this->generateForeignKeys(),
+            '{{casts}}' => $this->generateCasts(),
+            '{{relationWith}}' => $this->generateRelationWith(),
+            '{{relations}}' => $this->generateRelations(),
         ];
 
         $path = app_path('Models/' . $this->modelName . '.php');
@@ -142,7 +143,7 @@ class GenerateCrudCommand extends Command
             return '';
         }
 
-        $relationsCode = "\n    // Relationships\n";
+        $relationsCode = "\n\n    // Relationships";
 
         foreach ($this->relations as $relationType => $relatedModels) {
             foreach ($relatedModels as $relatedModel) {
@@ -224,11 +225,10 @@ class GenerateCrudCommand extends Command
             return '';
         }
 
-        $foreignKeys = "\n    // Foreign keys for relationships\n";
-
+        $foreignKeys = '';
         foreach ($this->relations['belongsTo'] as $relatedModel) {
             $foreignKey = Str::snake($relatedModel) . '_id';
-            $foreignKeys .= "    '{$foreignKey}',\n";
+            $foreignKeys .= ",\n            '{$foreignKey}'";
         }
 
         return $foreignKeys;
@@ -279,8 +279,6 @@ class GenerateCrudCommand extends Command
         return $definitions[$type] ?? "string('{$field}')";
     }
 
-    // ... (keep all other existing methods the same, just add the new ones above)
-
     protected function generateFillable()
     {
         $fillable = array_merge(array_keys($this->fields), ['created_by', 'updated_by']);
@@ -293,7 +291,9 @@ class GenerateCrudCommand extends Command
             }
         }
 
-        return "[\n            '" . implode("',\n            '", $fillable) . "'\n        ]";
+        $fillableArray = "            '" . implode("',\n            '", $fillable) . "'";
+
+        return "\n        " . $fillableArray;
     }
 
     protected function generateBaseModel()
@@ -534,8 +534,27 @@ class GenerateCrudCommand extends Command
         ];
 
         $allCasts = array_merge($casts, $defaultCasts);
+        $castsArray = "            " . implode(",\n            ", $allCasts);
 
-        return $allCasts ? "[\n            " . implode(",\n            ", $allCasts) . "\n        ]" : '[]';
+        return "\n        " . $castsArray;
+    }
+
+    protected function generateRelationWith()
+    {
+        if (empty($this->relations)) {
+            return "\n        'creator',\n        'updater'";
+        }
+
+        $with = ["\n        'creator'", "'updater'"];
+
+        foreach ($this->relations as $relationType => $relatedModels) {
+            foreach ($relatedModels as $relatedModel) {
+                $methodName = $this->getRelationMethodName($relationType, $relatedModel);
+                $with[] = "'{$methodName}'";
+            }
+        }
+
+        return "\n        " . implode(",\n        ", $with);
     }
 
     protected function generateValidationRules()
