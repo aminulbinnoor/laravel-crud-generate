@@ -41,22 +41,15 @@ php artisan make:crud Product --fields="name:string,sku:string:unique,descriptio
 php artisan make:crud Product --fields="name:string,description:text,price:decimal,quantity:integer"
 ```
 
-### E-commerce Product with Sample Data
+### Relation Management
 
 ```bash
-php artisan make:crud Product --fields="name:string,sku:string:unique,description:text,price:decimal,compare_price:decimal,quantity:integer,weight:decimal,is_active:boolean,is_featured:boolean" --sample
+php artisan make:crud Post --fields="title:string,content:text" --relations="belongsTo:User,hasMany:Comment"
 ```
 
-### User Management
 
 ```bash
-php artisan make:crud User --fields="name:string,email:string:unique,phone:string,address:text,is_active:boolean"
-```
-
-### Blog Post System
-
-```bash
-php artisan make:crud Post --fields="title:string,slug:string:unique,content:text,excerpt:text,featured_image:string,is_published:boolean,published_at:datetime"
+php artisan make:crud Comment --fields="content:text" --relations="belongsTo:Post,belongsTo:User"
 ```
 
 ## 🛠 Field Types Supported
