@@ -14,7 +14,7 @@ class Update{{modelName}}Request extends FormRequest
     public function rules()
     {
         return [
-            {{rules}}
+            {{rules}}{{relationRules}}
         ];
     }
 }
